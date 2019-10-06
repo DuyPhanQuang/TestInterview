@@ -51,9 +51,10 @@ const styles = StyleSheet.create({
         color: '#000'
     },
     listButtonView: {
+        position: 'absolute',
         flexDirection: 'row',
-        paddingTop: 25,
-        paddingHorizontal: 10
+        marginTop: 25,
+        bottom: 30
     }
 });
 
