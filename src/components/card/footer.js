@@ -8,7 +8,9 @@ import {
 
 const styles = StyleSheet.create({
     container: {
-        flex: 1,
+        flexDirection: "row",
+        justifyContent: "space-evenly",
+        padding: 16,
     }
 });
 
@@ -20,7 +22,7 @@ class Footer extends React.PureComponent {
     render() {
         return(
             <View style={styles.container}>
-
+                <Text>dasdsadsadsa</Text>
             </View>
         );
     };

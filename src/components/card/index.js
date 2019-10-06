@@ -1,7 +1,9 @@
-import Card from './card';
+import Cards from './cards';
 import Footer from './footer';
+import CardItem from './card-item';
 
 export {
-    Card,
-    Footer
+    Cards,
+    Footer,
+    CardItem
 };
