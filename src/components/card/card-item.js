@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import PropTypes from 'prop-types';
 import images from '../../assets';
+import _ from 'lodash';
 
 const styles = StyleSheet.create({
     container: {
@@ -58,6 +59,8 @@ const styles = StyleSheet.create({
     }
 });
 
+const title = 'My address is';
+
 class CardItem extends React.PureComponent {
     state = {
         topValue: 0,
@@ -66,7 +69,16 @@ class CardItem extends React.PureComponent {
         imageHeight: 100,
         borderRadiusValue: 100,
         data: this.props.profile.address || "",
-        title: 'My address is'
+        title
+    };
+
+    UNSAFE_componentWillReceiveProps(nextProps, nextContext) {
+        if (!_.isEqual(this.props.profile, nextProps.profile)) {
+            this.setState({
+                data: nextProps.profile.address,
+                title: title
+            });
+        };
     };
 
     _onLayout = ({ nativeEvent }) => {
@@ -158,9 +170,12 @@ class CardItem extends React.PureComponent {
                         <Text style={styles.title}>
                             {title}
                         </Text>
-                        <Text style={styles.address}>
-                            {data}
-                        </Text>
+                        {
+                            data.length ?
+                                <Text style={styles.address}>
+                                    {data}
+                                </Text> : null
+                        }
                         <View style={styles.listButtonView}>
                             <TouchableOpacity
                                 onPress={this.onPressButton('user')}
@@ -257,13 +272,16 @@ class CardItem extends React.PureComponent {
                             borderWidth: 1
                         }]}
                     >
-                        <Image
-                            source={{ uri: profile.avatar }}
-                            style={{
-                                flex: 1,
-                                borderRadius: borderRadiusValue
-                            }}
-                        />
+                        {
+                            profile.avatar ?
+                                <Image
+                                    source={{ uri: profile.avatar }}
+                                    style={{
+                                        flex: 1,
+                                        borderRadius: borderRadiusValue
+                                    }}
+                                /> : null
+                        }
                     </View>
                 </View>
             </View>

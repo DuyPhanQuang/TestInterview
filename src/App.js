@@ -8,9 +8,8 @@
 
 import React from 'react';
 import {
-  StyleSheet,
-  View,
-  StatusBar,
+    StyleSheet,
+    View,
     Text,
     ActivityIndicator
 } from 'react-native';
@@ -20,9 +19,11 @@ import {
 } from './components';
 import {UserApi} from './api';
 import {
-    pushElementToArray
+    pushElementToArray,
+    MY_FAVORITE
 } from './utils';
 import _ from 'lodash';
+import AsyncStorage from '@react-native-community/async-storage';
 
 const styles = StyleSheet.create({
     container: {
@@ -40,51 +41,168 @@ const styles = StyleSheet.create({
         backgroundColor: '#3b5998',
         alignItems: 'center',
         justifyContent: 'center'
+    },
+    favoriteView: {
+        flexDirection: 'row',
+        paddingHorizontal: 20
     }
 });
 
-class App extends React.Component {
+const n = 5;
+
+class App extends React.PureComponent {
 
     constructor(props) {
         super(props);
         this.state = {
             profiles: [],
-            loading: true
-        }
+            index: 0,
+            loading: true,
+            myFavoritePeople: [],
+            isShowListFavorite: false,
+            disabledButtonSee: false
+        };
     };
 
-    async componentDidMount() {
+    componentDidMount() {
+        this._fetchData();
+        this._getDataFromLocalStorage();
+    };
+
+    _fetchData = async () => {
         const {
             profiles
         } = this.state;
-        const response = await UserApi.getRandomUserInformation();
-        const arr = await pushElementToArray({ arr: profiles, item: response });
-        console.log('arr:', arr);
-        if (!_.isEmpty(response)) {
+        let arr = [];
+        for (let i = 0; i < n; i++) {
+            const response = await UserApi.getRandomUserInformation();
+            arr = await pushElementToArray({ arr: profiles, item: response });
+            if (!_.isEmpty(response)) {
+                this.setState({
+                    loading: false,
+                });
+            };
+        };
+        this.setState({
+            profiles: arr
+        });
+    };
+
+    _getDataFromLocalStorage = async () => {
+        const getData = await AsyncStorage.getItem(MY_FAVORITE);
+        if (!_.isEmpty(JSON.parse(getData))) {
             this.setState({
-                loading: false,
-                profiles: arr
+                myFavoritePeople: JSON.parse(getData)
+            });
+        } else {
+            this.setState({
+                disabledButtonSee: true
             });
         };
+    };
+
+    _update = ({ type }) => {
+        const {
+            profiles,
+            index
+        } = this.state;
+        this.setState({
+            index: this.state.index + 1
+        }, () => {
+            if (profiles.length - index === 2) {
+                this._fetchData();
+            };
+            switch (type) {
+                case "right":
+                    this._onAddFavorite();
+                    break;
+            };
+        });
+    };
+
+    _onSwipedLeft = () => {
+        this._update({ type: 'left' });
+    };
+
+    _onSwipedRight = () => {
+        this._update({ type: 'right' });
+    };
+
+    _onAddFavorite = async () => {
+        const {
+            profiles,
+            index,
+            myFavoritePeople
+        } = this.state;
+        let temp = [];
+        if (_.isEmpty(myFavoritePeople)) {
+            temp = await pushElementToArray({ arr: temp, item: profiles[index] });
+            await AsyncStorage.setItem(MY_FAVORITE, JSON.stringify(temp));
+            this.setState({
+                myFavoritePeople: temp,
+                isShowListFavorite: true
+            });
+        } else {
+            temp = await pushElementToArray({ arr: myFavoritePeople, item: profiles[index] });
+            await AsyncStorage.setItem(MY_FAVORITE, JSON.stringify(temp));
+            this.setState({
+                myFavoritePeople: temp
+            });
+        };
+        alert('Add user to your list favorite success!');
+    };
+
+    _onSeeMyFavorite = () => {
+        this.setState({
+            isShowListFavorite: true
+        });
+    };
+
+    renderListFavorite = () => {
+        const {
+            isShowListFavorite
+        } = this.state;
+        if (!isShowListFavorite) {
+            return null;
+        }
+        return this.state.myFavoritePeople.map((result, index) =>
+            (<View
+                key={index}
+            >
+                <Text style={{ color: '#FFF' }}>
+                    {result.fullName}
+                </Text>
+            </View>)
+        );
     };
 
     render() {
         const {
             profiles,
-            loading
+            index,
+            loading,
+            disabledButtonSee
         } = this.state;
         return(
             <View style={styles.container}>
                 {
                     !loading ?
                         <View style={styles.profileView}>
+                            <View style={styles.favoriteView}>
+                                {this.renderListFavorite()}
+                            </View>
                             <Cards
                                 profiles={profiles}
+                                index={index}
+                                onSwipedLeft={this._onSwipedLeft}
+                                onSwipedRight={this._onSwipedRight}
                             />
                             <Footer
-
+                                disabledButtonSee={disabledButtonSee}
+                                onSeeMyFavorite={this._onSeeMyFavorite}
                             />
-                        </View> :
+                        </View>
+                        :
                         <View style={styles.emptyView}>
                             <ActivityIndicator
                                 size={"large"}
